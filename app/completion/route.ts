@@ -29,6 +29,15 @@ function pickRandomSong(data: { tracks: { items: any[] } }): any {
     }
 }
 
+function pickFirstSong(data: { tracks: { items: any[] } }): any {
+    if (data.tracks.items && data.tracks.items.length > 0) {
+        return data.tracks.items[0];
+    } else {
+        throw new Error("Invalid data or no songs found");
+    }
+}
+
+
 // Function to add a song to the playback queue
 const addToQueue = async (track: SongResponseInterface) => {
     const cookieStore = await cookies();
@@ -99,7 +108,7 @@ const searchTrack = async (songInfo: SongResponseInterface) => {
                 songInfo.artist_name ? `artist:"${songInfo.artist_name}"` : null,
             ]
                 .filter(Boolean)
-                .join(''),
+                .join(' '),
             type: 'track',
         });
 
@@ -122,12 +131,21 @@ const searchTrack = async (songInfo: SongResponseInterface) => {
         // Get response data
         const data = await searchResponse.json();
 
-        // Target random item in 20 response songs:
-        const randomSong = pickRandomSong(data)
+        // Target random item in 20 response songs if song name is not specified
+        if (songInfo.song_name == null) {
+            const randomSong = pickRandomSong(data)
+            // Assign ID value
+            songInfo.id = randomSong.id
+            return songInfo;
 
-        // Assign ID value
-        songInfo.id = randomSong.id
-        return songInfo;
+        } else {
+            const nonrandomsong = pickFirstSong(data);
+            console.log(data);
+            console.log(url)
+            // Assign ID value
+            songInfo.id = nonrandomsong.id
+            return songInfo;
+        }
 
     } catch (error) {
         console.error('Error in searchTrack:', error);
@@ -137,6 +155,7 @@ const searchTrack = async (songInfo: SongResponseInterface) => {
 
 
 export async function GET(req: NextRequest) {
+    var textResponse = "";
     try {
         // Extract query parameter or body text from the request
         const userContent = req.nextUrl.searchParams.get('text');
@@ -156,7 +175,7 @@ export async function GET(req: NextRequest) {
                     "role": "system",
                     "content": [
                         {
-                            "text": "The instructions presented to you will concern one or more interactions with Spotify, you will return a json object.\n\nFor each command that you identify in the prompt, add 'COMMAND_TYPE' : {} to the json object before returning it\n\nThese are the different types of commands:\n'queue'\n'play'\n\nFor example, if your prompt is  'Queue 3 foo fighters songs and then queue the emotion by borns, also, play despacito first' you would add\n\n{\n'play' : {\nsongs: [ {'artist_name' : null, 'song_name' : 'despacito']\n},\n 'queue' : {\n songs: [ { 'artist_name' : 'foo fighters', 'song_name' : null }, { 'artist_name' : 'foo fighters', 'song_name' : null }, { 'artist_name' : 'foo fighters', 'song_name' : null }, { 'artist_name' : 'borns', 'song_name' : 'the emotion' } ]\n }\n}\n\n\nThere can only be one 'play' command per return object, and the play command should be the song or artist that the request indicates they want to hear now. The 'play' command should come first in the object you return, and everything else should be a 'queue' command. \n\nRequest:\n",
+                            "text": "The instructions presented to you will concern one or more interactions with Spotify, you will return a json object.\n\nFor each command that you identify in the prompt, add 'COMMAND_TYPE' : {} to the json object before returning it\n\nThese are the different types of commands:\n'queue'\n'play'\n\nFor example, if your prompt is  'Queue 3 foo fighters songs and then queue the emotion by borns, also, play despacito first' you would add\n\n{\n'play' : {\nsongs: [ {'artist_name' : null, 'song_name' : 'despacito']\n},\n 'queue' : {\n songs: [ { 'artist_name' : 'foo fighters', 'song_name' : null }, { 'artist_name' : 'foo fighters', 'song_name' : null }, { 'artist_name' : 'foo fighters', 'song_name' : null }, { 'artist_name' : 'borns', 'song_name' : 'the emotion' } ]\n }\n}\n\n\nThere can only be one 'play' command per return object, and the play command should be the song or artist that the request indicates they want to hear now. The 'play' command should come first in the object you return, and everything else should be a 'queue' command. \n\nadditionally, use context clues and your own knowledge to fill in for common artist abbreviations\n\nFor example, rhcp should be Red Hot Chili Peppers etc\n\nRequest:\n",
                             "type": "text"
                         }
                     ]
@@ -190,8 +209,9 @@ export async function GET(req: NextRequest) {
 
             // Ensure the parsed object is indeed an object
             if (typeof responseObject === 'object' && responseObject !== null) {
+
                 // Check for 'play' and extract its 'songs' object
-                if (responseObject.hasOwnProperty('play')) {
+                if (responseObject.hasOwnProperty('play') && responseObject['play'].length > 0) {
                     const playSongs = responseObject['play']['songs'];
 
                     // Assuming playSongs is an array of song objects
@@ -202,7 +222,9 @@ export async function GET(req: NextRequest) {
                                 song_name: song.song_name || null,
                                 id: null
                             });
+
                             // Play the given song
+                            textResponse += "Playing " + r.artist_name + "!\n"
                             playSong(r)
                         }
                     }
@@ -222,6 +244,8 @@ export async function GET(req: NextRequest) {
                             });
                             // Add song to queue
                             addToQueue(r)
+                            textResponse += "Queued " + r.artist_name + "!\n"
+
                         }
                     }
 
@@ -234,7 +258,7 @@ export async function GET(req: NextRequest) {
         }
 
         console.log(messageContent)
-        return NextResponse.json({ response: messageContent });
+        return NextResponse.json({ response: textResponse });
     } catch (error) {
         console.error('Error in API handler:', error);
         return NextResponse.json(

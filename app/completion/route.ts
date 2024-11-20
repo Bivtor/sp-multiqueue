@@ -13,6 +13,7 @@ const openai = new OpenAI({
 interface SongResponseInterface {
     artist_name: string | null;
     song_name: string | null;
+    album_name: string | null;
     id: string | null;
 }
 
@@ -25,7 +26,8 @@ function pickRandomSong(data: { tracks: { items: any[] } }): any {
         const randomIndex = pickRandomNumber(0, data.tracks.items.length - 1);
         return data.tracks.items[randomIndex];
     } else {
-        throw new Error("Invalid data or no songs found");
+        console.log('song not found')
+
     }
 }
 
@@ -33,61 +35,11 @@ function pickFirstSong(data: { tracks: { items: any[] } }): any {
     if (data.tracks.items && data.tracks.items.length > 0) {
         return data.tracks.items[0];
     } else {
-        throw new Error("Invalid data or no songs found");
+        console.log('song not found')
+        return null
     }
 }
 
-
-// Function to add a song to the playback queue
-const addToQueue = async (track: SongResponseInterface) => {
-    const cookieStore = await cookies();
-    const accessToken = cookieStore.get('access_token')?.value;
-    console.log(track)
-
-    const id = track.id;
-
-    const url = `https://api.spotify.com/v1/me/player/queue?uri=spotify:track:${id}`;
-
-    const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-            Authorization: `Bearer ${accessToken}`,
-        },
-    });
-
-    if (response.ok) {
-        console.log("Song added to the queue!");
-    } else {
-        const errorText = await response.text();
-        console.error(`Failed to add to queue: ${response.status} - ${errorText}`);
-    }
-}
-
-// Function to add a song to the playback queue
-const playSong = async (track: SongResponseInterface) => {
-    const cookieStore = await cookies();
-    const accessToken = cookieStore.get('access_token')?.value;
-
-    const id = track.id;
-    const url = `https://api.spotify.com/v1/me/player/play`;
-
-    const response = await fetch(url, {
-        method: 'PUT',
-        headers: {
-            Authorization: `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({
-            uris: [`spotify:track:${id}`]
-        })
-    });
-
-    if (response.ok) {
-        console.log("Song is now playing!");
-    } else {
-        const errorText = await response.text();
-        console.error(`Failed to play the song: ${response.status} - ${errorText}`);
-    }
-}
 
 
 // Find the track 
@@ -106,6 +58,7 @@ const searchTrack = async (songInfo: SongResponseInterface) => {
             q: [
                 songInfo.song_name ? `track:"${songInfo.song_name}"` : null,
                 songInfo.artist_name ? `artist:"${songInfo.artist_name}"` : null,
+                songInfo.album_name ? `album:"${songInfo.album_name}"` : null,
             ]
                 .filter(Boolean)
                 .join(' '),
@@ -134,17 +87,25 @@ const searchTrack = async (songInfo: SongResponseInterface) => {
         // Target random item in 20 response songs if song name is not specified
         if (songInfo.song_name == null) {
             const randomSong = pickRandomSong(data)
-            // Assign ID value
-            songInfo.id = randomSong.id
-            return songInfo;
+
+            if (randomSong) {
+                // Assign ID value
+                songInfo.id = randomSong.id
+                return songInfo;
+            } else {
+                return null;
+            }
+
 
         } else {
             const nonrandomsong = pickFirstSong(data);
-            console.log(data);
-            console.log(url)
-            // Assign ID value
-            songInfo.id = nonrandomsong.id
-            return songInfo;
+            if (nonrandomsong) {
+                // Assign ID value
+                songInfo.id = nonrandomsong.id
+                return songInfo;
+            } else {
+                return null;
+            }
         }
 
     } catch (error) {
@@ -156,13 +117,73 @@ const searchTrack = async (songInfo: SongResponseInterface) => {
 
 export async function GET(req: NextRequest) {
     var textResponse = "";
+    // Function to play a song
+    const playSong = async (track: SongResponseInterface) => {
+        const cookieStore = await cookies();
+        const accessToken = cookieStore.get('access_token')?.value;
+
+        const id = track.id;
+        const url = `https://api.spotify.com/v1/me/player/play`;
+
+        const response = await fetch(url, {
+            method: 'PUT',
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+            },
+            body: JSON.stringify({
+                uris: [`spotify:track:${id}`]
+            })
+        });
+
+        if (response.ok) {
+            textResponse += "Playing " + track.artist_name + "!\n"
+        } else if (response.status === 404) {
+            textResponse += "No active device found!\n"
+        }
+        else {
+            textResponse += "Could not find song or artist!\n";
+            // const errorText = await response.text();
+            // console.error(`Failed to play the song: ${response.status} - ${errorText}`);
+        }
+    }
+
+    // Function to add a song to the playback queue
+    const addToQueue = async (track: SongResponseInterface) => {
+        const cookieStore = await cookies();
+        const accessToken = cookieStore.get('access_token')?.value;
+
+        const id = track.id;
+
+        const url = `https://api.spotify.com/v1/me/player/queue?uri=spotify:track:${id}`;
+
+        await fetch(url, {
+            method: 'POST',
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+            },
+        }).then(response => {
+            if (response.ok) {
+                textResponse += "Queued " + track.artist_name + "!\n"
+            } else if (response.status === 404) {
+                textResponse += "No active device found!\n"
+            }
+            else {
+                textResponse += "Could not find song or artist!\n";
+                const errorText = response.text();
+                console.error(`Failed to add to queue: ${response.status} - ${errorText}`);
+            }
+        });
+
+
+    }
+
     try {
         // Extract query parameter or body text from the request
         const userContent = req.nextUrl.searchParams.get('text');
 
         if (!userContent) {
             return NextResponse.json(
-                { error: 'No text provided in the request' },
+                { error: 'No input!' },
                 { status: 400 }
             );
         }
@@ -175,8 +196,8 @@ export async function GET(req: NextRequest) {
                     "role": "system",
                     "content": [
                         {
-                            "text": "The instructions presented to you will concern one or more interactions with Spotify, you will return a json object.\n\nFor each command that you identify in the prompt, add 'COMMAND_TYPE' : {} to the json object before returning it\n\nThese are the different types of commands:\n'queue'\n'play'\n\nFor example, if your prompt is  'Queue 3 foo fighters songs and then queue the emotion by borns, also, play despacito first' you would add\n\n{\n'play' : {\nsongs: [ {'artist_name' : null, 'song_name' : 'despacito']\n},\n 'queue' : {\n songs: [ { 'artist_name' : 'foo fighters', 'song_name' : null }, { 'artist_name' : 'foo fighters', 'song_name' : null }, { 'artist_name' : 'foo fighters', 'song_name' : null }, { 'artist_name' : 'borns', 'song_name' : 'the emotion' } ]\n }\n}\n\n\nThere can only be one 'play' command per return object, and the play command should be the song or artist that the request indicates they want to hear now. The 'play' command should come first in the object you return, and everything else should be a 'queue' command. \n\nadditionally, use context clues and your own knowledge to fill in for common artist abbreviations\n\nFor example, rhcp should be Red Hot Chili Peppers etc\n\nRequest:\n",
-                            "type": "text"
+                            "type": "text",
+                            "text": "The instructions presented to you will concern one or more interactions with Spotify, you will return a json object.\n\nFor each command that you identify in the prompt, add 'COMMAND_TYPE' : {} to the json object before returning it\n\nThese are the different types of commands:\n'queue'\n'play'\n\nFor example, if your prompt is  'Queue 3 foo fighters songs and then queue the emotion by borns and then the Dune soundtrack, also, play despacito first' you would add\n\n{\n  \"play\": {\n    \"songs\": [\n      {\n        \"artist_name\": null,\n        \"song_name\": \"despacito\",\n        \"album_name\": null\n      }\n    ]\n  },\n  \"queue\": {\n    \"songs\": [\n      {\n        \"artist_name\": \"foo fighters\",\n        \"song_name\": null,\n        \"album_name\": null\n      },\n      {\n        \"artist_name\": \"foo fighters\",\n        \"song_name\": null,\n        \"album_name\": null\n      },\n      {\n        \"artist_name\": \"foo fighters\",\n        \"song_name\": null,\n        \"album_name\": null\n      },\n      {\n        \"artist_name\": \"borns\",\n        \"song_name\": \"the emotion\",\n        \"album_name\": null\n      },\n      {\n        \"artist_name\": null\n        \"song_name\": null\n        \"album_name\": \"Dune Soundtrack:\"\n      }\n    ]\n  }\n}\n\n\n\nThere can only be one 'play' command per return object, and the play command should be the song or artist that the request indicates they want to hear now. The 'play' command should come first in the object you return, and everything else should be a 'queue' command. \n\nadditionally, use context clues and your own knowledge to fill in for common artist abbreviations\n\nFor example, rhcp should be Red Hot Chili Peppers etc\n\nDo not include 'play' if nothing has been asked to be played now\nDo not include 'queue' if nothing has been asked to be queued\n\nRequest:\n"
                         }
                     ]
                 },
@@ -211,7 +232,7 @@ export async function GET(req: NextRequest) {
             if (typeof responseObject === 'object' && responseObject !== null) {
 
                 // Check for 'play' and extract its 'songs' object
-                if (responseObject.hasOwnProperty('play') && responseObject['play'].length > 0) {
+                if (responseObject.hasOwnProperty('play')) {
                     const playSongs = responseObject['play']['songs'];
 
                     // Assuming playSongs is an array of song objects
@@ -220,12 +241,12 @@ export async function GET(req: NextRequest) {
                             const r = await searchTrack({
                                 artist_name: song.artist_name || null,
                                 song_name: song.song_name || null,
+                                album_name: song.album_name || null,
                                 id: null
                             });
 
                             // Play the given song
-                            textResponse += "Playing " + r.artist_name + "!\n"
-                            playSong(r)
+                            if (r) { await playSong(r) }
                         }
                     }
                 }
@@ -240,11 +261,13 @@ export async function GET(req: NextRequest) {
                             const r = await searchTrack({
                                 artist_name: song.artist_name || null,
                                 song_name: song.song_name || null,
+                                album_name: song.album_name || null,
                                 id: null
                             });
                             // Add song to queue
-                            addToQueue(r)
-                            textResponse += "Queued " + r.artist_name + "!\n"
+                            if (r) {
+                                await addToQueue(r)
+                            }
 
                         }
                     }

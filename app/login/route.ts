@@ -1,12 +1,10 @@
-import { NextResponse, NextRequest } from "next/server";
 import { redirect } from 'next/navigation'
-var crypto = require('crypto');
-var querystring = require('querystring');
 import { cookies } from 'next/headers'
+const crypto = await import('crypto')
+const querystring = await import('querystring');
 
 
-
-export async function GET(req: NextRequest, res: NextResponse) {
+export async function GET() {
     const cookieStore = await cookies()
 
     // Make random string 
@@ -17,15 +15,15 @@ export async function GET(req: NextRequest, res: NextResponse) {
             .slice(0, length);
     }
 
-    var stateKey = 'spotify_auth_state';
-    var state = generateRandomString(16);
+    const stateKey = 'spotify_auth_state';
+    const state = generateRandomString(16);
 
     // Set cookie
     cookieStore.set(stateKey, state)
 
     // your application requests authorization
-    var scope = 'user-read-private user-read-email user-modify-playback-state';
-    var r = 'https://accounts.spotify.com/authorize?' +
+    const scope = 'user-read-private user-read-email user-modify-playback-state';
+    const r = 'https://accounts.spotify.com/authorize?' +
         querystring.stringify({
             response_type: 'code',
             client_id: process.env.NEXT_PUBLIC_CLIENT_ID,

@@ -1,13 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { cookies } from 'next/headers'
-var querystring = require('querystring');
+const querystring = await import('querystring');
 
 
 // Initialize OpenAI with API key
 const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
 });
+
+interface Track {
+    id: string;
+}
 
 
 interface SongResponseInterface {
@@ -21,17 +25,19 @@ function pickRandomNumber(min: number, max: number) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-function pickRandomSong(data: { tracks: { items: any[] } }): any {
+function pickRandomSong(data: { tracks: { items: Track[] } }): Track | null {
     if (data.tracks.items && data.tracks.items.length > 0) {
         const randomIndex = pickRandomNumber(0, data.tracks.items.length - 1);
         return data.tracks.items[randomIndex];
     } else {
-        console.log('song not found')
-
+        console.error('song not found')
+        return null
     }
 }
 
-function pickFirstSong(data: { tracks: { items: any[] } }): any {
+
+
+function pickFirstSong(data: { tracks: { items: Track[] } }): Track | null {
     if (data.tracks.items && data.tracks.items.length > 0) {
         return data.tracks.items[0];
     } else {
@@ -116,7 +122,7 @@ const searchTrack = async (songInfo: SongResponseInterface) => {
 
 
 export async function GET(req: NextRequest) {
-    var textResponse = "";
+    let textResponse = "";
     // Function to play a song
     const playSong = async (track: SongResponseInterface) => {
         const cookieStore = await cookies();

@@ -1,6 +1,5 @@
 'use client'
 import { useState, useEffect } from "react"
-import { usePathname, useSearchParams } from 'next/navigation'
 import LoginButton from "@/components/Misc/LoginButton"
 import TextInterface from "../TextInterface/TextInterface"
 
@@ -8,7 +7,7 @@ import TextInterface from "../TextInterface/TextInterface"
 export function isCookieTimeWithinOneHour(): boolean {
 
     function getCookie(key: string) {
-        var b = document.cookie.match("(^|;)\\s*" + key + "\\s*=\\s*([^;]+)");
+        const b = document.cookie.match("(^|;)\\s*" + key + "\\s*=\\s*([^;]+)");
         return b ? b.pop() : "";
     }
 
@@ -32,15 +31,13 @@ export function isCookieTimeWithinOneHour(): boolean {
 export default function Content() {
     const [hasToken, setHasToken] = useState<boolean>(false)
 
-    const pathname = usePathname()
-    const searchParams = useSearchParams()
 
     useEffect(() => {
         // const accessCookie = getCookie('access_token')
         if (isCookieTimeWithinOneHour()) {
             setHasToken(true)
         }
-    }, [pathname, searchParams]);
+    }, []);
 
     return (
         <div className="w-full h-full flex flex-col items-center overflow-hidden">

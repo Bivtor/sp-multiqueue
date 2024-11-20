@@ -1,7 +1,5 @@
 "use client";
-
 import { useState } from "react";
-import OpenAI from "openai";
 import Error from "next/error";
 import { isCookieTimeWithinOneHour } from "../Home/Content";
 import { useRouter } from 'next/navigation'
@@ -58,7 +56,6 @@ export default function TextInterface({ setHasToken }: TextInterfaceProps) {
             } else {
                 setResponseText(`Error: ${String(error)}`);
             }
-
 
         }
     };

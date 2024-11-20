@@ -1,7 +1,3 @@
-import Image from "next/image"
-
-
-
 export default function Footer() {
     return (
         <div className="w-full flex flex-row justify-between">

@@ -1,22 +1,22 @@
-import { NextResponse, NextRequest } from "next/server";
-var querystring = require('querystring');
+import { NextRequest } from "next/server";
 import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
+const querystring = await import('querystring');
 
 
-export async function GET(req: NextRequest, res: NextResponse) {
+export async function GET(req: NextRequest) {
     const cookieStore = await cookies()
 
     // your application requests refresh and access tokens
     // after checking the state parameter
 
-    var stateKey = 'spotify_auth_state';
+    const stateKey = 'spotify_auth_state';
     const url = new URL(req.url);
 
     const code = url.searchParams.get('code') || null;
     const state = url.searchParams.get('state') || null;
 
-    var storedState = cookieStore.get(stateKey)?.value || null
+    const storedState = cookieStore.get(stateKey)?.value || null
     if (state === null || state !== storedState!) {
         redirect('/#' +
             querystring.stringify({
@@ -25,7 +25,7 @@ export async function GET(req: NextRequest, res: NextResponse) {
     } else {
         // Delete cookie
         req.cookies.delete(stateKey);
-        var authOptions = {
+        const authOptions = {
             method: 'POST',
             headers: {
                 'content-type': 'application/x-www-form-urlencoded',
@@ -44,15 +44,16 @@ export async function GET(req: NextRequest, res: NextResponse) {
 
         if (tokenResponse.ok) {
             const access_token = tokenData.access_token;
-            const refresh_token = tokenData.refresh_token;
-            const expires_in = tokenData.expires_in;
+            // const refresh_token = tokenData.refresh_token;
+            // const expires_in = tokenData.expires_in;
 
             // Fetch user information using the access token
             const userOptions = {
                 headers: { 'Authorization': 'Bearer ' + access_token }
             };
-            const userResponse = await fetch('https://api.spotify.com/v1/me', userOptions);
-            const userData = await userResponse.json();
+            await fetch('https://api.spotify.com/v1/me', userOptions);
+            // const userResponse = 
+            // const userData = await userResponse.json();
 
             // Redirect with access and refresh tokens as query params
             cookieStore.set('access_token', access_token)

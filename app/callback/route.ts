@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
             body: querystring.stringify({
                 grant_type: 'authorization_code',
                 code: code,
-                redirect_uri: process.env.REDIRECT_URI
+                redirect_uri: "https://sp-multiqueue.vercel.app/callback" //process.env.REDIRECT_URI,
             })
         };
 

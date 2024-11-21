@@ -28,7 +28,7 @@ export async function GET() {
             response_type: 'code',
             client_id: process.env.NEXT_PUBLIC_CLIENT_ID,
             scope: scope,
-            redirect_uri: process.env.REDIRECT_URI,
+            redirect_uri: "https://sp-multiqueue.vercel.app/callback", //process.env.REDIRECT_URI,
             state: state
         })
     redirect(r);

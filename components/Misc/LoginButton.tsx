@@ -3,7 +3,7 @@ export default function LoginButton() {
 
     const onClickHandler = () => {
         // if 
-        window.location.href = "http://localhost:3000/login";
+        window.location.href = "https://sp-multiqueue.vercel.app/login";
     }
     return (
         <button className="" onClick={() => { onClickHandler() }}>Login</button>

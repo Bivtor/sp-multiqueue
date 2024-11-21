@@ -25,10 +25,12 @@ export default function Header() {
 
 
             <div className="flex flex-row justify-center pt-10 sm:pt-3"> {/* Bottom Box */}
-                <div>
+                <div className='flex flex-col gap-2 items-center'>
                     <h1 className="sm:text-lg text-sm font-bold underline-offset-8 underline">
-                        What if Spotify could queue multiple songs for you??
+                        What if Spotify could queue
                     </h1>
+                    <h1 className="sm:text-lg text-sm font-bold underline-offset-8 underline">
+                        multiple songs for you??                    </h1>
                 </div>
             </div>
         </div>

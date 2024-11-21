@@ -40,7 +40,7 @@ export default function Content() {
     }, []);
 
     return (
-        <div className="w-full h-full flex flex-col items-center overflow-hidden">
+        <div className="w-full h-full flex flex-col items-center overflow-hidden ">
             {hasToken ? <TextInterface setHasToken={setHasToken} /> : <LoginButton />}
         </div>
     )

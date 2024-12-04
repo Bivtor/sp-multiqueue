@@ -7,10 +7,10 @@
   <!-- Badges -->
   <p>
     <a href="">
-        <img src="https://img.shields.io/github/last-commit/bivtor/Spotify MultiQueue-game" alt="last update" />
+        <img src="https://img.shields.io/github/last-commit/bivtor/sp-multiqueue" alt="last update" />
     </a>
-    <a href="https://github.com/bivtor/Spotify MultiQueue-game/stargazers">
-        <img src="https://img.shields.io/github/stars/bivtor/Spotify MultiQueue-game" alt="stars" />
+    <a href="https://github.com/bivtor/sp-multiqueue/stargazers">
+        <img src="https://img.shields.io/github/stars/bivtor/sp-multiqueue" alt="stars" />
     </a>
   </p>
 </div>
@@ -48,6 +48,9 @@ One of my main gripes with asking Siri to do things (other than that it usually 
     <br />
     <a href="https://nextjs.org/">
         <img src="https://img.shields.io/badge/next.js-000000?style=for-the-badge&logo=nextdotjs&logoColor=white" alt="Next.js" />
+    </a>
+  <a href="https://tailwindcss.com/">
+        <img src="https://img.shields.io/badge/Tailwind_CSS-grey?style=for-the-badge&logo=tailwind-css&logoColor=38B2AC" alt="Tailwind CSS" />
     </a>
 </details>
 

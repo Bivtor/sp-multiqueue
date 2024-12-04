@@ -50,13 +50,6 @@ One of my main gripes with asking Siri to do things (other than that it usually 
         <img src="https://img.shields.io/badge/next.js-000000?style=for-the-badge&logo=nextdotjs&logoColor=white" alt="Next.js" />
     </a>
 </details>
-<details>
-    <summary>Server</summary>
-    <br />
-    <a href="https://nextjs.org/">
-        <img src="https://img.shields.io/badge/next.js-000000?style=for-the-badge&logo=nextdotjs&logoColor=white" alt="Next.js" />
-    </a>
-</details>
 
 <!-- Control Flow -->
 
